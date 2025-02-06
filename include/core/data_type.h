@@ -7,6 +7,7 @@ namespace infini {
 class DataType {
   public:
     // <https://onnx.ai/onnx/intro/concepts.html#element-type>
+    // 以下创建
     static const DataType Undefine;
     static const DataType Float32;
     static const DataType UInt8;
@@ -24,6 +25,7 @@ class DataType {
     static const DataType BFloat16;
     // "sizePerElement" show the DType to cpu_type
     // DataType::Bool -> int8_t   DataType::Float16 -> uint16_t
+    // 保存每个数据类型所占的字节数
     static constexpr size_t sizePerElement[]{0,
                                              sizeof(float),
                                              sizeof(uint8_t),
@@ -41,13 +43,14 @@ class DataType {
                                              0,
                                              0,
                                              sizeof(uint16_t)};
-
+    // 保存每个数据类型的名称
     static constexpr std::string_view names[]{
         "Undefine",    "Float32", "UInt8",  "Int8",   "UInt16",
         "Int16",       "Int32",   "Int64",  "String", "Bool",
         "Float16",     "Double",  "UInt32", "UInt64", "PlaceHolder",
         "PlaceHolder", "BFloat16"};
 
+    // 保存每种数据类型对应的 cpu 类型
     static constexpr int cpuType[]{-1, 0, 2, 3, 4, 5,  6,  7, -1,
                                    3,  4, 9, 1, 8, -1, -1, 4};
 
@@ -62,6 +65,7 @@ class DataType {
     bool operator==(const DataType &rhs) const { return index == rhs.index; }
     bool operator<(const DataType &rhs) const { return index < rhs.index; }
 
+    // 获取特定类型在内部对应的索引
     template <typename T> static int get() {
         IT_TODO_HALT_MSG("Unsupported data type");
     }

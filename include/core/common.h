@@ -29,6 +29,7 @@ using std::unordered_map;
 using std::vector;
 
 // Metaprogramming utilities
+// 这部分宏定义了一些辅助宏，为后面部分的宏提供功能支持
 #define _CAT(A, B) A##B
 #define _SELECT(NAME, NUM) _CAT(NAME##_, NUM)
 #define _GET_COUNT(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, COUNT, ...) COUNT
@@ -43,6 +44,8 @@ using std::vector;
               std::string("[") + __FILE__ + ":" + std::to_string(__LINE__) +   \
               "] Assertion failed (" + #condition + "): " + info)
 #define _IT_ASSERT_1(condition) _IT_ASSERT_2(condition, "")
+// IT_ASSERT 根据参数个数选择不同的宏（_IT_ASSERT_2 或 _IT_ASSERT_1）运行
+// 主要用于判断所传入的条件是否为真，若为假则抛出异常
 #define IT_ASSERT(...) _VA_SELECT(_IT_ASSERT, __VA_ARGS__)
 
 #define IT_TODO_HALT() _IT_ASSERT_2(false, "Unimplemented")

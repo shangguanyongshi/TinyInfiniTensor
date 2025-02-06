@@ -17,17 +17,17 @@ namespace infini
         friend class GraphObj;
 
     protected:
-        int dim;
+        int dim; // 保存 shape 的维度
 
         DataType dtype;
-        vector<WRef<OperatorObj>> targets;
-        WRef<OperatorObj> source;
-        Blob data;
-        Runtime runtime;
+        vector<WRef<OperatorObj>> targets; // 保存所有引用该 Tensor 的 weak_ptr 类型的 Operator
+        WRef<OperatorObj> source; // 保存生成该 Tensor 的 weak_ptr 类型的 Operator
+        Blob data; // 保存 Tensor 的数据
+        Runtime runtime; // 保存 Tensor 的运行时
 
     private:
-        Shape shape;
-        size_t _size; // Cache of Π(shape).
+        Shape shape; // 保存 Tensor 的 shape
+        size_t _size; // 保存 Tensor 所有维度的乘积
         Fuid fuid;    // Cloned tensors share the same id. Tensors constructed from
                       // scratch have a new id.
 
@@ -37,6 +37,7 @@ namespace infini
         string toString() const override;
 
         size_t size() const { return _size; }
+        // 返回 Tensor 中数据所占的字节数
         size_t getBytes() const { return _size * dtype.getSize(); }
 
         Shape getDims() const { return shape; }

@@ -51,6 +51,11 @@ namespace infini
             kernels.emplace(key, KernelRecord{kernel, name, ++nKernels});
             return true;
         }
+        /**
+         * @brief 根据传入的 kernelAttrs 属性返回对应类型的的 kernel
+         * @param kernelAttrs 所需 kernel 的属性
+         * @return Kernel* 所需的 kernel
+         */
         Kernel *getKernel(const KernelAttrs &kernelAttrs) const
         {
             auto it = kernels.find(kernelAttrs);

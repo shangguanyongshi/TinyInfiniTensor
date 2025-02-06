@@ -29,6 +29,7 @@ namespace infini
 
     void *NativeCpuRuntimeObj::alloc(size_t size)
     {
+        // size + sizeof(uint64_t) - 1 使得分配的空间大于等于 size 且是 uint64_t 的整数倍
         return calloc((size + sizeof(uint64_t) - 1) / sizeof(uint64_t),
                       sizeof(uint64_t));
     }
