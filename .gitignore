@@ -34,7 +34,7 @@
 build/
 build_debug/
 
-.vscode/
+# .vscode/
 
 # python
 *.egg-info
