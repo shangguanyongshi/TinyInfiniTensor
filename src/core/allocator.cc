@@ -34,12 +34,6 @@ namespace infini
         // =================================== 作业 ===================================
         
         // 查找是否有空闲的块大于等于 size 的大小
-        // 遍历输出 freeBlocks 的所有元素
-        // std::cout << size << std::endl;
-        // for (auto it = freeBlocks.begin(); it != freeBlocks.end(); it++) {
-        //     std::cout << "freeBlocks: " << it->first << " " << it->second << std::endl;
-        // }
-
         auto biggerBlock = freeBlocks.lower_bound(size);
         if (biggerBlock != freeBlocks.end()) {
             // 如果有空闲块大于等于 size 的大小，直接分配
@@ -69,15 +63,7 @@ namespace infini
                 return allocAddr;
             }
         }
-        // 如果没有空闲块可以容纳 size 大小的内存块，且没有空闲内存紧邻峰值内存块部分，直接在峰值内存块后分配
-        if (this->peak >= this->used + size) {
-            size_t allocAddr = this->used;
-            this->used += size;
-            return allocAddr;
-        }
-        
-        // 没有空闲块且峰值直接在当前峰值内存块后分配新的内存块
-        
+        // 没有空闲块包含峰值内存块直接在当前峰值内存块后分配新的内存块
         size_t allocAddr = this->peak;
         this->peak += size;
         this->used += size;
@@ -99,7 +85,13 @@ namespace infini
             this->used -= size;
             return;
         }
-        
+        // 分别记录是否要和前一个或后一个空闲块合并
+        bool isMergeWithPre = false;
+        bool isMergeWithNext = false;
+        size_t preBlockAddr = 0;
+        size_t preBlockSize = 0;
+        size_t nextBlockAddr = 0;
+        size_t nextBlockSize = 0;
         // 查找 addr 是否与某个空闲块相邻，如果相邻则合并
         // 先找到第一个内存地址大于 addr 的空闲内存块
         auto geqBlock = freeBlocksPos.upper_bound(addr);
@@ -107,18 +99,9 @@ namespace infini
             // 如果空闲地址的起始地址都大于 addr，判断能否将要释放的地址与第一个空闲地址合并
             if (geqBlock->first == addr + size) {
                 // addr + size 与第一个空闲地址相同，合并
-                size_t lastBlockAddr = geqBlock->first;
-                size_t lastBlockSize = geqBlock->second;
-                // 删除原来的空闲块信息
-                freeBlocks.erase(lastBlockSize);
-                freeBlocksPos.erase(lastBlockAddr);
-                // 插入合并后的空闲块信息
-                freeBlocks.insert({lastBlockSize + size, addr});
-                freeBlocksPos.insert({addr, lastBlockSize + size});
-            } else {
-                // 如果不相邻，直接插入
-                freeBlocks.insert({size, addr});
-                freeBlocksPos.insert({addr, size});
+                nextBlockAddr = geqBlock->first;
+                nextBlockSize = geqBlock->second;
+                isMergeWithNext = true;
             }
         }
         if (geqBlock == freeBlocksPos.end()) {
@@ -127,69 +110,64 @@ namespace infini
             lastBlock--;
             if (lastBlock->first + lastBlock->second == addr) {
                 // addr 与最后一个空闲地址相同，合并
-                size_t lastBlockAddr = lastBlock->first;
-                size_t lastBlockSize = lastBlock->second;
-                // 删除原来的空闲块信息
-                freeBlocks.erase(lastBlockSize);
-                freeBlocksPos.erase(lastBlockAddr);
-                // 插入合并后的空闲块信息
-                freeBlocks.insert({lastBlockSize + size, lastBlockAddr});
-                freeBlocksPos.insert({lastBlockAddr, lastBlockSize + size});
-            } else {
-                // 如果不相邻，直接插入
-                freeBlocks.insert({size, addr});
-                freeBlocksPos.insert({addr, size});
+                preBlockAddr = lastBlock->first;
+                preBlockSize = lastBlock->second;
+                isMergeWithPre = true;
             }
         }
         // 如果 addr 位于两个空闲块之间，判断能否与两个空闲块合并
         if (geqBlock != freeBlocksPos.end() && geqBlock != freeBlocksPos.begin()) {
-            auto lastBlock = geqBlock;
-            lastBlock--; // 前一个空闲块
+            auto preBlock = geqBlock;
+            preBlock--; // 前一个空闲块
             auto nextBlock = geqBlock;
             nextBlock++; // 后一个空闲块
-            if (lastBlock->first + lastBlock->second == addr && 
+            if (preBlock->first + preBlock->second == addr && 
                 nextBlock->first == addr + size) {
                 // addr 与前后两个空闲地址相邻，将三个空闲块合并
-                size_t newBlockAddr = lastBlock->first;
-                size_t newBlockSize = lastBlock->second + size + nextBlock->second;
-                // 删除原来的空闲块信息
-                size_t lastBlockAddr = lastBlock->first;
-                size_t lastBlockSize = lastBlock->second;
-                size_t nextBlockAddr = nextBlock->first;
-                size_t nextBlockSize = nextBlock->second;
-                freeBlocks.erase(lastBlockSize);
-                freeBlocksPos.erase(lastBlockAddr);
-                freeBlocks.erase(nextBlockSize);
-                freeBlocksPos.erase(nextBlockAddr);
-                
-                // 插入合并后的空闲块信息
-                freeBlocks.insert({newBlockSize, newBlockAddr});
-                freeBlocksPos.insert({newBlockAddr, newBlockSize});
-            } else if (lastBlock->first + lastBlock->second == addr) {
+                preBlockAddr = preBlock->first;
+                preBlockSize = preBlock->second;
+                nextBlockAddr = nextBlock->first;
+                nextBlockSize = nextBlock->second;
+                isMergeWithPre = true;
+                isMergeWithNext = true;
+            } else if (preBlock->first + preBlock->second == addr) {
                 // addr 与前一个空闲地址相同，合并
-                size_t lastBlockAddr = lastBlock->first;
-                size_t lastBlockSize = lastBlock->second;
-                // 删除原来的空闲块信息
-                freeBlocks.erase(lastBlockSize);
-                freeBlocksPos.erase(lastBlockAddr);
-                // 插入合并后的空闲块信息
-                freeBlocks.insert({lastBlockSize + size, lastBlockAddr});
-                freeBlocksPos.insert({lastBlockAddr, lastBlockSize + size});
+                preBlockAddr = preBlock->first;
+                preBlockSize = preBlock->second;
+                isMergeWithPre = true;
             } else if (nextBlock->first == addr + size) {
                 // addr 与后一个空闲地址相同，合并
-                size_t nextBlockAddr = geqBlock->first;
-                size_t nextBlockSize = geqBlock->second;
-                // 删除原来的空闲块信息
-                freeBlocks.erase(nextBlockSize);
-                freeBlocksPos.erase(nextBlockAddr);
-                // 插入合并后的空闲块信息
-                freeBlocks.insert({nextBlockSize + size, addr});
-                freeBlocksPos.insert({addr, nextBlockSize + size});
-            } else {
-                // 如果不相邻，直接插入
-                freeBlocks.insert({size, addr});
-                freeBlocksPos.insert({addr, size});
+                nextBlockAddr = nextBlock->first;
+                nextBlockSize = nextBlock->second;
+                isMergeWithNext = true;
             }
+        }
+        
+        // 执行实际的内存释放
+        if (isMergeWithPre && isMergeWithNext) {
+            // 释放的内存与前后两个空闲块合并
+            freeBlocks.erase(preBlockSize);
+            freeBlocks.erase(nextBlockSize);
+            freeBlocksPos.erase(preBlockAddr);
+            freeBlocksPos.erase(nextBlockAddr);
+            freeBlocks.insert({preBlockSize + size + nextBlockSize, preBlockAddr});
+            freeBlocksPos.insert({preBlockAddr, preBlockSize + size + nextBlockSize});
+        } else if (isMergeWithPre) {
+            // 释放的内存与前一个空闲块合并
+            freeBlocks.erase(preBlockSize);
+            freeBlocksPos.erase(preBlockAddr);
+            freeBlocks.insert({preBlockSize + size, preBlockAddr});
+            freeBlocksPos.insert({preBlockAddr, preBlockSize + size});
+        } else if (isMergeWithNext) {
+            // 释放的内存与后一个空闲块合并
+            freeBlocks.erase(nextBlockSize);
+            freeBlocksPos.erase(nextBlockAddr);
+            freeBlocks.insert({size + nextBlockSize, addr});
+            freeBlocksPos.insert({addr, size + nextBlockSize});
+        } else {
+            // 释放的内存不与任何空闲块合并
+            freeBlocks.insert({size, addr});
+            freeBlocksPos.insert({addr, size});
         }
         this->used -= size;
     }
