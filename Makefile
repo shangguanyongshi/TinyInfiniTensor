@@ -3,7 +3,7 @@
 # 会忽略这些文件，而优先执行如下定义的构建过程
 .PHONY : build clean format install-python test-cpp test-onnx
 
-TYPE ?= Release
+TYPE ?= Debug
 TEST ?= ON
 
 CMAKE_OPT = -DCMAKE_BUILD_TYPE=$(TYPE)

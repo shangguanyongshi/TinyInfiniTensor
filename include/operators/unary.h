@@ -26,6 +26,9 @@ namespace infini
     int numOutputs() const override { return 1; }
   };
 
+  /**
+     * @brief 对输入张量中的元素执行 clip，使得小于 min 的值变为 min，大于 max 的值变为 max
+     */
   class ClipObj : public OperatorObj
   {
   public:
@@ -72,7 +75,9 @@ namespace infini
     BFloat162Float,
     Float2Float,
   };
-
+  /**
+   * @brief 对输入张量中的元素执行 cast 操作，将输入张量中的元素转换为指定的数据类型
+   */
   class CastObj : public OperatorObj
   {
   public:

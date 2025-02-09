@@ -2,4 +2,4 @@
 
 namespace infini {
 Exception::Exception(const std::string &msg) : std::runtime_error(msg) {}
-} // namespace infini
+}  // namespace infini
